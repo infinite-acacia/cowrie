@@ -1,12 +1,13 @@
-import './style.css';
+import './styles/style.css';
+import './styles/index.css';
 
-import { Cowrie } from './cowrie.ts';
+import { Cowrie } from './cowrie';
 
-const root = document.querySelector<HTMLDivElement>('#app')!;
+const root = document.querySelector<HTMLDivElement>('#app');
 
-const editor = new Cowrie(root);
+const editor = new Cowrie(<HTMLDivElement>root, { tailwind: true });
+editor.init();
 
-root.innerHTML = `
-  <h1>Hello Vite!</h1>
-  <a href="https://vitejs.dev/guide/features.html" target="_blank">Documentation</a>
-`;
+// document.addEventListener('DOMContentLoaded', () => {
+//   editor.init();
+// });

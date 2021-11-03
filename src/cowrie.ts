@@ -1,34 +1,72 @@
 import { EditorView } from 'prosemirror-view';
 import { EditorState } from 'prosemirror-state';
-import { schema } from 'prosemirror-schema-basic';
-import { undo, redo, history } from 'prosemirror-history';
-import { keymap } from 'prosemirror-keymap';
-import { baseKeymap } from 'prosemirror-commands';
-import { DOMParser } from 'prosemirror-model';
+import { schema } from './schema';
+import { DOMParser, Schema } from 'prosemirror-model';
+import { addListNodes } from 'prosemirror-schema-list';
+// import { addTableNodes } from 'prosemirror-schema-table';
+import { setupEditor } from './helpers/setup';
 export class Cowrie {
-  private root?: HTMLDivElement;
-  private view: EditorView;
-  constructor(root: HTMLDivElement) {
-    this.root = root;
+  #root?: HTMLDivElement;
+
+  #schema?: Schema;
+  #view?: EditorView;
+  constructor(
+    root: HTMLDivElement,
+    { schema }: { schema?: Schema; tailwind?: boolean } = {}
+  ) {
+    this.#root = root;
+    if (schema) {
+      this.#schema = schema;
+    }
+  }
+
+  set root(element: HTMLDivElement) {
+    if (!this.#root) {
+      this.#root = element;
+    }
+  }
+
+  set schema(schema: Schema) {
+    if (!this.#schema) {
+      this.#schema = schema;
+    }
+  }
+
+  init() {
+    if (!this.#root) {
+      throw new Error(
+        'You must provide a container element. Either with the constructor or with the setter!'
+      );
+    }
+
+    if (!this.#schema) {
+      this.#schema = new Schema({
+        nodes: addListNodes(schema.spec.nodes, 'paragraph block*', 'block'),
+        marks: schema.spec.marks,
+      });
+    }
+
+    const initialContent =
+      document.querySelector('#content') ??
+      (() => {
+        const div = document.createElement('div');
+        div.innerHTML = '<strong>######</strong>';
+        return div;
+      })();
+
     const state = EditorState.create({
       schema,
-      plugins: [
-        history(),
-        keymap({ 'Mod-z': undo, 'Mod-y': redo }),
-        keymap(baseKeymap),
-      ],
-      doc: DOMParser.fromSchema(schema).parse(this.root),
+      plugins: setupEditor({
+        schema,
+        floatingMenu: false,
+        menuBar: false,
+        history: true,
+      }),
+      doc: DOMParser.fromSchema(this.#schema).parse(initialContent),
     });
-    this.view = new EditorView(this.root, {
+    this.#view = new EditorView(this.#root, {
       state,
-      dispatchTransation(transaction) {
-        console.log(
-          `Document size went from ${transaction.before.content.size} to ${transaction.doc.content.size}`
-        );
-
-        const newState = this.view.state.apply(transaction);
-        this.view.updateState(newState);
-      },
     });
+    window.view = this.#view;
   }
 }

@@ -1,10 +1,18 @@
-import {keymap} from "prosemirror-keymap"
-import {history} from "prosemirror-history"
-import {baseKeymap} from "prosemirror-commands"
-import {Plugin} from "prosemirror-state"
-import {dropCursor} from "prosemirror-dropcursor"
-import {gapCursor} from "prosemirror-gapcursor"
+import { keymap } from 'prosemirror-keymap';
+import { baseKeymap } from 'prosemirror-commands';
+import { dropCursor } from 'prosemirror-dropcursor';
+import { gapCursor } from 'prosemirror-gapcursor';
 
-export function getBasicPlugins() {
-    return []
+import { buildKeymap } from './keymap';
+import { buildInputRules } from './inputrules';
+import { CowrieSetupOptions } from '../types';
+
+export function getBasicPlugins(options: CowrieSetupOptions) {
+  return [
+    buildInputRules(options.schema),
+    keymap(buildKeymap(options.schema, options.mapKeys)),
+    keymap(baseKeymap),
+    dropCursor(),
+    gapCursor(),
+  ];
 }
